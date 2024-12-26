@@ -426,7 +426,7 @@ named! {
     device_id:   le_i32 >>
     (
         Device {
-            device_type: DeviceType::from(device_type),
+            device_type: DeviceType::from(device_type as i32),
             device_id: device_id as usize,
         }
     )

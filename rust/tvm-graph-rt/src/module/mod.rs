@@ -51,11 +51,11 @@ fn wrap_backend_packed_func(func_name: String, func: BackendPackedCFunc) -> Box<
             type_codes.as_ptr(),
             values.len() as i32,
             &mut ret_val,
-            &mut ret_type_code,
+            &mut (ret_type_code as u32),
             std::ptr::null_mut(),
         );
         if exit_code == 0 {
-            Ok(RetValue::from_tvm_value(ret_val, ret_type_code))
+            Ok(RetValue::from_tvm_value(ret_val, ret_type_code as u32))
         } else {
             Err(tvm_sys::errors::FuncCallError::get_with_context(
                 func_name.clone(),

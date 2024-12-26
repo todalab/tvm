@@ -273,13 +273,12 @@ fn main() -> Result<()> {
         .header(backend_api.display().to_string())
         .clang_arg(dlpack_include)
         .clang_arg(tvm_include)
-        .blacklist_type("max_align_t")
         .layout_tests(false)
         .derive_partialeq(true)
         .derive_eq(true)
         .derive_default(true)
         .generate()
-        .map_err(|()| {
+        .map_err(|_| {
             anyhow::anyhow!("bindgen failed to generate the Rust bindings for the C API")
         })?
         .write_to_file(out_file)
