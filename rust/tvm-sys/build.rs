@@ -247,12 +247,20 @@ fn main() -> Result<()> {
                     "cargo:rustc-link-search=native={}/build",
                     build_path.display()
                 );
+                println!(
+                    "cargo:rustc-link-search=native={}",
+                    build_path.display()
+                );
             }
 
             if cfg!(feature = "dynamic-linking") {
                 println!("cargo:rustc-link-lib=dylib={}", library_name);
                 println!(
                     "cargo:rustc-link-search=native={}/build",
+                    build_path.display()
+                );
+                println!(
+                    "cargo:rustc-link-search=native={}",
                     build_path.display()
                 );
             }
