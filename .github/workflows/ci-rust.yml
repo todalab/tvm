@@ -1,0 +1,123 @@
+name: CI Rust
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  TVM_HOME: /opt/tvm
+  TVM_LIBRARY_PATH: /opt/tvm/lib
+  PYTHONPATH: /home/runner/work/tvm/tvm/python
+  RUST_BACKTRACE: 1
+
+jobs:
+  linux:
+    if: ${{ github.repository == 'todalab/tvm' }}
+    runs-on: Ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: Install llvm, libncurses5-dev
+        run: |
+           sudo apt-get install -y libtinfo5 llvm
+
+      - name: Cache libtvm
+        id: cache-libtvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/tvm
+          key: ${{ runner.os }}-libtvm-v0.18.0
+
+      - name: Build libtvm, libtvm_runtime
+        if: steps.cache-libtvm.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build
+          cd build
+          cp ../cmake/config.cmake .
+          echo set\(USE_SORT ON\) >> config.cmake
+          echo set\(USE_RPC ON\) >> config.cmake
+          echo set\(USE_MICRO ON\) >> config.cmake
+          echo set\(USE_MICRO_STANDALONE_RUNTIME ON\) >> config.cmake
+          echo set\(USE_PROFILER ON\) >> config.cmake
+          echo set\(USE_LLVM ON\) >> config.cmake
+          echo set\(CMAKE_CXX_FLAGS -Werror\) >> config.cmake
+          echo set\(USE_CCACHE OFF\) >> config.cmake
+          echo set\(BACKTRACE_ON_SEGFAULT ON\) >> config.cmake
+          echo set\(USE_UMA OFF\) >> config.cmake
+          echo set\(SUMMARIZE ON\) >> config.cmake
+          echo set\(INSTALL_DEV ON\) >> config.cmake
+
+          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/tvm
+          cmake --build . --config Release
+          mkdir /opt/tvm
+          cmake --install .
+
+          echo set\(BUILD_STATIC_RUNTIME ON\) >> config.cmake
+          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/tvm
+          cmake --build . --config Release
+          cmake --install .
+
+      - run: find $PYTHONPATH
+
+      - name: add TVM PATH
+        run: |
+          echo "/opt/tvm" >> "$GITHUB_PATH"
+          find /opt/tvm
+
+      - run: rustc --version
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - run: pip install numpy decorator psutil typing_extensions pytest
+
+      - name: cargo test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
+
+          echo tvm-sys start
+          cargo test -p tvm-sys --verbose
+
+          echo tvm-rt start
+          cargo test -p tvm-rt --verbose
+
+          echo tvm start
+          cargo test -p tvm --verbose
+
+          echo basics start
+          cargo test -p basics --verbose
+
+          echo callback start
+          cargo test -p callback --verbose
+
+          echo tvm-macros start
+          cargo test -p tvm-macros --verbose
+
+          echo compiler-ext start
+          cargo test -p compiler-ext --verbose
+
+          echo tvm-graph-rt start
+          cargo test -p tvm-graph-rt --verbose
+
+          echo test-rt-tvm-basic start
+          cargo test -p test-rt-tvm-basic --verbose
+
+          echo test-rt-tvm-dso start
+          cargo test -p test-rt-tvm-dso --verbose
+
+          echo test-rt-nn start
+          cargo test -p test-rt-nn --verbose
+
+          # echo test-rt-wasm32 start
+          # cargo test -p test-rt-wasm32 --verbose
