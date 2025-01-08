@@ -31,7 +31,8 @@ static PARAMS_FIXTURE_PATH: &str = mf_dir!("/tests/graph.params");
 
 #[test]
 fn test_load_graph() {
-    let output = std::process::Command::new(mf_dir!("/tests/build_model.py"))
+    let output = std::process::Command::new("python")
+        .args(&[mf_dir!("/tests/build_model.py")])
         .env(
             "PYTHONPATH",
             concat!(mf_dir!("/../../python"), ":", mf_dir!("/../../nnvm/python")),

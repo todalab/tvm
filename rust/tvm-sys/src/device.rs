@@ -88,8 +88,14 @@ impl From<DeviceType> for ffi::DLDeviceType {
     }
 }
 
-impl From<ffi::DLDeviceType> for DeviceType {
-    fn from(device_type: ffi::DLDeviceType) -> Self {
+impl From<::std::os::raw::c_uint> for DeviceType {
+    fn from(device_type: ::std::os::raw::c_uint) -> Self {
+        Self::n(device_type as _).expect("invalid enumeration value for ffi::DLDeviceType")
+    }
+}
+
+impl From<::std::os::raw::c_int> for DeviceType {
+    fn from(device_type: ::std::os::raw::c_int) -> Self {
         Self::n(device_type as _).expect("invalid enumeration value for ffi::DLDeviceType")
     }
 }

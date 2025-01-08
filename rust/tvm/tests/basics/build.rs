@@ -23,8 +23,9 @@ fn main() -> Result<()> {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let tvm_mk_add = concat!(env!("CARGO_MANIFEST_DIR"), "/src/tvm_add.py");
 
-    let output = std::process::Command::new(tvm_mk_add)
+    let output = std::process::Command::new("python")
         .args(&[
+            tvm_mk_add,
             if cfg!(feature = "cpu") {
                 "llvm"
             } else {
