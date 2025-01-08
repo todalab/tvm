@@ -244,6 +244,10 @@ fn main() -> Result<()> {
                 println!("cargo:rustc-link-lib=static={}", library_name);
                 // TODO(@jroesch): move this to tvm-build as library_path?
                 println!(
+                    "cargo:rustc-link-search=native={}/lib",
+                    build_path.display()
+                );
+                println!(
                     "cargo:rustc-link-search=native={}/build",
                     build_path.display()
                 );
@@ -251,6 +255,10 @@ fn main() -> Result<()> {
 
             if cfg!(feature = "dynamic-linking") {
                 println!("cargo:rustc-link-lib=dylib={}", library_name);
+                println!(
+                    "cargo:rustc-link-search=native={}/lib",
+                    build_path.display()
+                );
                 println!(
                     "cargo:rustc-link-search=native={}/build",
                     build_path.display()
