@@ -37,8 +37,8 @@ fn main() -> Result<()> {
 
     let graph_path = out_dir.join("graph.o");
 
-    let output = Command::new(&generator)
-        .arg(&out_dir)
+    let output = Command::new("python")
+        .args(&[generator.clone(), out_dir.clone()])
         .output()
         .with_context(|| format!("Failed to execute: {:?}", generator))?;
 

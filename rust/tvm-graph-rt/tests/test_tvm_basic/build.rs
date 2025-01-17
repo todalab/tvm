@@ -37,18 +37,22 @@ fn main() -> Result<()> {
     let obj_file = out_dir.join("test.o");
     let lib_file = out_dir.join("libtest_basic.a");
 
-    let output = Command::new(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/build_test_lib.py"
-    ))
-    .arg(&out_dir)
-    .output()?;
+    let output = Command::new("python")
+        .args(
+            &[concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/src/build_test_lib.py"
+            ),
+                &out_dir.clone().into_os_string().into_string().unwrap()])
+        .output()?;
+
+    let err = String::from_utf8(output.stderr)?;
+    println!("out {}\nerr {}", String::from_utf8(output.stdout)?, err);
 
     assert!(
         obj_file.exists(),
         "Could not build tvm lib: {}",
-        String::from_utf8(output.stderr)?
-            .trim()
+        err.trim()
             .split("\n")
             .last()
             .unwrap_or("")

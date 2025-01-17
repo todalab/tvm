@@ -17,6 +17,96 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
+  windows:
+    if: ${{ github.repository == 'todalab/tvm' }}
+    runs-on: windows-2019
+    env:
+      LLVM_PATH: D:\a\tvm\opt\llvm
+      DOWNLOAD_PATH: D:\a\tvm\download
+      TVM_HOME: C:\Miniconda\envs\tvm-build\Library
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Cache libtvm
+        id: cache-libtvm
+        uses: actions/cache@v4
+        with:
+          path: ./conda/pkg
+          key: ${{ runner.os }}-libtvm-v0.18.0
+
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - name: Conda Build
+        if: steps.cache-libtvm.outputs.cache-hit != 'true'
+        shell: cmd /C call {0}
+        run: >-
+          conda build --output-folder=conda/pkg conda/recipe
+      - run: conda install tvm -c ./conda/pkg
+      - run: Get-ChildItem -Path ./conda/pkg -Recurse
+      - run: Get-ChildItem -Path C:\Miniconda\envs\tvm-build -Recurse
+      - run: Get-ChildItem -Path ./rust -Recurse
+      - run: pip install numpy decorator psutil typing_extensions pytest
+
+      - name: tvm-sys test
+        run: |
+          cd rust
+          cargo test -p tvm-sys --verbose
+      - name: tvm-rt test
+        run: |
+          cd rust
+          cargo test -p tvm-rt --verbose
+      - name: tvm test
+        run: |
+          cd rust
+          cargo test -p tvm --verbose
+      - name: basics test
+        run: |
+          cd rust
+          cargo test -p basics --verbose
+      - name: callback test
+        run: |
+          cd rust
+          cargo test -p callback --verbose
+      - name: macros test
+        run: |
+          cd rust
+          cargo test -p tvm-macros --verbose
+      - name: compiler-ext test
+        run: |
+          cd rust
+          cargo test -p compiler-ext --verbose --features "tvm/python tvm/dynamic-linking"      
+      - name: tvm-graph-rt test
+        shell: cmd /C call {0}
+        run: |
+          cd rust
+          cargo build
+          cargo test -p tvm-graph-rt --verbose
+      # unsupported windows
+      # - name: test-rt-tvm-basic test
+      #   shell: cmd /C call {0}
+      #   run: |
+      #     cd rust
+      #     cargo test -p test-rt-tvm-basic --verbose
+      - name: test-rt-tvm-dso test
+        shell: cmd /C call {0}
+        run: |
+          cd rust
+          cargo test -p test-rt-tvm-dso --verbose
+      # unsupported windows
+      # - name: test-rt-nn test
+      #   shell: cmd /C call {0}
+      #   run: |
+      #     cd rust
+      #     cargo test -p test-rt-nn --verbose
+      # - name: test-rt-wasm32 test
+      #   run: |
+      #     cd rust
+      #     export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+      #     export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
+      #     cargo test -p test-rt-wasm32 --verbose
+
   linux:
     if: ${{ github.repository == 'todalab/tvm' }}
     runs-on: Ubuntu-22.04
@@ -80,44 +170,77 @@ jobs:
 
       - run: pip install numpy decorator psutil typing_extensions pytest
 
-      - name: cargo test
+      - name: tvm-sys test
         run: |
           cd rust
           export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
           export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
-
-          echo tvm-sys start
           cargo test -p tvm-sys --verbose
-
-          echo tvm-rt start
+      - name: tvm-rt test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p tvm-rt --verbose
-
-          echo tvm start
+      - name: tvm test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p tvm --verbose
-
-          echo basics start
+      - name: basics test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p basics --verbose
-
-          echo callback start
+      - name: callback test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p callback --verbose
-
-          echo tvm-macros start
+      - name: macros test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p tvm-macros --verbose
 
-          echo compiler-ext start
+      - name: compiler-ext test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p compiler-ext --verbose
-
-          echo tvm-graph-rt start
+      - name: tvm-graph-rt test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p tvm-graph-rt --verbose
-
-          echo test-rt-tvm-basic start
+      - name: test-rt-tvm-basic test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p test-rt-tvm-basic --verbose
-
-          echo test-rt-tvm-dso start
+      - name: test-rt-tvm-dso test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p test-rt-tvm-dso --verbose
-
-          echo test-rt-nn start
+      - name: test-rt-nn test
+        run: |
+          cd rust
+          export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+          export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
           cargo test -p test-rt-nn --verbose
 
-          # echo test-rt-wasm32 start
-          # cargo test -p test-rt-wasm32 --verbose
+      # - name: test-rt-wasm32 test
+      #   run: |
+      #     cd rust
+      #     export RUSTFLAGS="-L${TVM_LIBRARY_PATH} ${RUSTFLAGS}"
+      #     export LD_LIBRARY_PATH="${TVM_LIBRARY_PATH}"
+      #     cargo test -p test-rt-wasm32 --verbose
